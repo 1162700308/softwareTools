@@ -87,7 +87,7 @@ public class StockOutputManagerJPanel implements ActionListener, MouseListener, 
 
 		toolPanel.add(tool_add);
 		// 隐藏出库单修改操作
-		/* toolPanel.add(tool_modify); */
+		//toolPanel.add(tool_modify); 
 		toolPanel.add(tool_delete);
 
 		topPanel.add(toolPanel, "West");
@@ -258,7 +258,7 @@ public class StockOutputManagerJPanel implements ActionListener, MouseListener, 
 	public void mouseClicked(MouseEvent e) {
 		if (e.getSource() == tool_add) {
 			new AddStockOutputJFrame(user, this);
-		} else if (e.getSource() == tool_modify) {
+		} /*else if (e.getSource() == tool_modify) {
 			int row = table.getSelectedRow();
 			if (row < 0) {
 				JOptionPane.showMessageDialog(null, "请选择出库单");
@@ -266,7 +266,7 @@ public class StockOutputManagerJPanel implements ActionListener, MouseListener, 
 				new ModifyStockOutputJFrame(this, table, row);
 			}
 
-		} else if (e.getSource() == tool_delete) {
+		}*/ else if (e.getSource() == tool_delete) {
 			int row = table.getSelectedRow();
 			if (row < 0) {
 				JOptionPane.showMessageDialog(null, "请选择出库单");

@@ -4,14 +4,11 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -23,23 +20,20 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 
 import org.jb2011.lnf.beautyeye.ch3_button.BEButtonUI;
-import org.rancode.framework.util.BillNumber;
 import org.rancode.framework.util.Item;
 import org.rancode.framework.util.MyFont;
-import org.rancode.module.entity.User;
 import org.rancode.module.services.Impl.CategoryServiceImpl;
 import org.rancode.module.services.Impl.GoodsServiceImpl;
-import org.rancode.module.services.Impl.StockOrderServiceImpl;
 import org.rancode.module.services.Impl.WarehouseServiceImpl;
 
-public class AddStockInputJFrame extends JFrame implements MouseListener, ActionListener {
+public class TransformJFrame extends JFrame implements MouseListener {
 
 	// 定义全局组件
 	JPanel backgroundPanel, labelPanel, contentPanel, buttonPanel;
-	JLabel label_name, label_price, label_origin, label_stock, label_warehouse, label_category;
-	JTextField name, price, origin, stock;
-	JComboBox warehouse, category;
-	JButton button_add;
+	JLabel label_name, label_price, label_origin, label_stock, label_stock_lock,label_warehouse, label_warehouse_lock,label_category;
+	JTextField name, price, origin, stock,stock_lock;
+	JComboBox warehouse, category,warehouse_lock;
+	JButton button_modify;
 
 	// 获得屏幕的大小
 	final static int width = Toolkit.getDefaultToolkit().getScreenSize().width;
@@ -48,21 +42,19 @@ public class AddStockInputJFrame extends JFrame implements MouseListener, Action
 	// 表格对象
 	JTable table;
 	int selectedRow;
-	StockInputManagerJPanel parentPanel;
+	GoodsManagerJPanel parentPanel;
 
-	// 用户对象
-	User user;
-
-	public AddStockInputJFrame(User user, StockInputManagerJPanel parentPanel) {
-		this.user = user;
+	public TransformJFrame(GoodsManagerJPanel parentPanel, JTable table, int selectedRow) {
+		this.table = table;
+		this.selectedRow = selectedRow;
 		this.parentPanel = parentPanel;
 
 		initBackgroundPanel();
 
 		this.add(backgroundPanel);
 
-		this.setTitle("添加入库单");
-		this.setSize(480, 270);
+		this.setTitle("修改库存");
+		this.setSize(640, 360);
 		this.setVisible(true);
 		this.setLocationRelativeTo(null);
 		this.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
@@ -72,9 +64,9 @@ public class AddStockInputJFrame extends JFrame implements MouseListener, Action
 	public void initBackgroundPanel() {
 		backgroundPanel = new JPanel(new BorderLayout());
 
+		initLabelPanel();
 		initContentPanel();
 		initButtonPanel();
-		initLabelPanel();
 
 		backgroundPanel.add(labelPanel, "North");
 		backgroundPanel.add(contentPanel, "Center");
@@ -86,7 +78,7 @@ public class AddStockInputJFrame extends JFrame implements MouseListener, Action
 
 		labelPanel = new JPanel();
 
-		JLabel title = new JLabel("入库信息");
+		JLabel title = new JLabel("商品库存信息");
 		title.setFont(MyFont.Static);
 
 		labelPanel.add(title);
@@ -94,19 +86,30 @@ public class AddStockInputJFrame extends JFrame implements MouseListener, Action
 
 	// 初始化商品信息面板
 	public void initContentPanel() {
-		contentPanel = new JPanel(new GridLayout(4, 2));
+		contentPanel = new JPanel(new GridLayout(6, 2));
 
 		label_name = new JLabel("商品名称", JLabel.CENTER);
 		label_price = new JLabel("商品价格", JLabel.CENTER);
 		label_origin = new JLabel("商品产地", JLabel.CENTER);
-		label_stock = new JLabel("入库数量", JLabel.CENTER);
-		label_warehouse = new JLabel("所属仓库", JLabel.CENTER);
+		label_stock = new JLabel("调入数量", JLabel.CENTER);
+		label_stock_lock = new JLabel("调出仓库库存", JLabel.CENTER);
+		label_warehouse = new JLabel("调入仓库", JLabel.CENTER);
+		label_warehouse_lock = new JLabel("调出仓库", JLabel.CENTER);
 		label_category = new JLabel("所属分类", JLabel.CENTER);
 
-		name = new JTextField("");
-		price = new JTextField("");
-		origin = new JTextField("");
+		BigDecimal price_decimal = (BigDecimal) table.getValueAt(selectedRow, 2);
+		String price_String = price_decimal.toString();
+
+		double stock_double = (Double) table.getValueAt(selectedRow, 6);
+		String stock_String = String.valueOf(stock_double);
+
+		name = new JTextField((String) table.getValueAt(selectedRow, 1));
+		name.setEnabled(false);
+		price = new JTextField(price_String);
+		origin = new JTextField((String) table.getValueAt(selectedRow, 3));
 		stock = new JTextField("");
+		stock_lock = new JTextField(stock_String);
+		stock_lock.setEnabled(false);
 
 		// 商品种类下拉框
 		category = new JComboBox();
@@ -122,8 +125,14 @@ public class AddStockInputJFrame extends JFrame implements MouseListener, Action
 			for (int i = 0; i < list_category.size(); i++) {
 				String id = (String) list_category.get(i)[0];
 				String name = (String) list_category.get(i)[1];
+				if (id.equals((String) table.getValueAt(selectedRow, 8))) {
+					sign = i;
+				}
 				category.addItem(new Item(id, name));
 			}
+
+			// 设置所选商品种类为默认种类
+			category.setSelectedIndex(sign);
 		}
 
 		// 仓库下拉框
@@ -140,22 +149,59 @@ public class AddStockInputJFrame extends JFrame implements MouseListener, Action
 			for (int i = 0; i < list_warehouse.size(); i++) {
 				String id = (String) list_warehouse.get(i)[0];
 				String name = (String) list_warehouse.get(i)[1];
+
+				if (id.equals((String) table.getValueAt(selectedRow, 7))) {
+					sign = i;
+				}
 				warehouse.addItem(new Item(id, name));
 			}
+			// 设置所选商品所属仓库为默认仓库
+			warehouse.setSelectedIndex(sign);
 		}
+		
+		warehouse_lock = new JComboBox();
+		WarehouseServiceImpl warehouseServices = new WarehouseServiceImpl();
+		List<Object[]> list_warehouses = null;
+		try {
+			list_warehouses = warehouseServices.selectAll();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (list_warehouses != null) {
+			int sign = 0;
+			for (int i = 0; i < list_warehouses.size(); i++) {
+				String id = (String) list_warehouses.get(i)[0];
+				String name = (String) list_warehouses.get(i)[1];
+
+				if (id.equals((String) table.getValueAt(selectedRow, 7))) {
+					sign = i;
+				}
+				warehouse_lock.addItem(new Item(id, name));
+			}
+			// 设置所选商品所属仓库为默认仓库
+			warehouse_lock.setSelectedIndex(sign);
+			warehouse_lock.setEnabled(false);
+		}
+		
+		
 
 		contentPanel.add(label_name);
 		contentPanel.add(name);
+		contentPanel.add(label_warehouse_lock);
+		contentPanel.add(warehouse_lock);
 		//contentPanel.add(label_price);
 		//contentPanel.add(price);
 		//contentPanel.add(label_origin);
 		//contentPanel.add(origin);
-		contentPanel.add(label_stock);
-		contentPanel.add(stock);
-		contentPanel.add(label_category);
-		contentPanel.add(category);
+		contentPanel.add(label_stock_lock);
+		contentPanel.add(stock_lock);
 		contentPanel.add(label_warehouse);
 		contentPanel.add(warehouse);
+		contentPanel.add(label_stock);
+		contentPanel.add(stock);
+		//contentPanel.add(label_category);
+		//contentPanel.add(category);
+		
 
 	}
 
@@ -163,19 +209,19 @@ public class AddStockInputJFrame extends JFrame implements MouseListener, Action
 	public void initButtonPanel() {
 		buttonPanel = new JPanel();
 
-		button_add = new JButton("保存");
-		button_add.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.lightBlue));
-		button_add.setForeground(Color.white);
-		button_add.setFont(MyFont.Static);
-		button_add.addMouseListener(this);
+		button_modify = new JButton("保存修改");
+		button_modify.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.lightBlue));
+		button_modify.setForeground(Color.white);
+		button_modify.setFont(MyFont.Static);
+		button_modify.addMouseListener(this);
 
-		buttonPanel.add(button_add);
+		buttonPanel.add(button_modify);
 	}
 
 	// 鼠标点击事件
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		if (e.getSource() == button_add) {
+		if (e.getSource() == button_modify) {
 
 			String name_String = name.getText().trim();
 			String price_String = price.getText().trim();
@@ -197,17 +243,17 @@ public class AddStockInputJFrame extends JFrame implements MouseListener, Action
 				double stock_double = Double.valueOf(stock_String);
 				String warehouse_id = ((Item) warehouse.getSelectedItem()).getKey();
 				String category_id = ((Item) category.getSelectedItem()).getKey();
-				String id = UUID.randomUUID().toString().replaceAll("-", "");
-				Object[] params = { id, name_String, price_decimal, origin_String, stock_double, warehouse_id,
-						category_id };
+				String id = (String) table.getValueAt(selectedRow, 0);
+				Object[] params = { name_String, price_decimal, origin_String, stock_double, warehouse_id, category_id,
+						id };
 				GoodsServiceImpl goodsService = new GoodsServiceImpl();
 				try {
-					result = goodsService.insertById(params);
+					result = goodsService.updateById(params);
 				} catch (Exception e1) {
 					e1.printStackTrace();
 				}
 				if (result > 0) {
-					JOptionPane.showMessageDialog(null, "添加商品成功");
+					JOptionPane.showMessageDialog(null, "商品修改成功");
 					this.setVisible(false);
 					parentPanel.refreshTablePanel();
 				}
@@ -238,13 +284,6 @@ public class AddStockInputJFrame extends JFrame implements MouseListener, Action
 	public void mouseReleased(MouseEvent arg0) {
 		// TODO Auto-generated method stub
 
-	}
-
-	// 下拉框改变事件
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		
-		
 	}
 
 }

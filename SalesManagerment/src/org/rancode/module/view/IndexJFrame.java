@@ -242,8 +242,8 @@ public class IndexJFrame extends JFrame implements MouseListener, ActionListener
 		//jTabbedPane.addTab("销售单", new SaleOrderManagerJPanel(user).backgroundPanel);
 		jTabbedPane.addTab("入库单", new StockInputManagerJPanel(user).backgroundPanel);
 		jTabbedPane.addTab("出库单", new StockOutputManagerJPanel(user).backgroundPanel);
-		jTabbedPane.addTab("调拨商品", new StockOutputManagerJPanel(user).backgroundPanel);
-		jTabbedPane.addTab("库存管理", new WarehouseManagerJPanel().backgroundPanel);
+		jTabbedPane.addTab("调拨商品", new GoodsTransformJPanel().backgroundPanel);
+		jTabbedPane.addTab("库存盘点", new StockManagerJPanel().backgroundPanel);
 
 		centerPanel.add(jTabbedPane, "Center");
 	}

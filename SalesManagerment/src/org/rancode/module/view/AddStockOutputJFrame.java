@@ -28,6 +28,7 @@ import org.rancode.framework.util.MyFont;
 import org.rancode.module.entity.User;
 import org.rancode.module.services.Impl.GoodsServiceImpl;
 import org.rancode.module.services.Impl.StockOrderServiceImpl;
+import org.rancode.module.services.Impl.WarehouseServiceImpl;
 
 public class AddStockOutputJFrame extends JFrame implements MouseListener, ActionListener {
 
@@ -97,7 +98,7 @@ public class AddStockOutputJFrame extends JFrame implements MouseListener, Actio
 		contentPanel = new JPanel(new GridLayout(4, 2));
 
 		label_name = new JLabel("商品名称", JLabel.CENTER);
-		label_amount = new JLabel("入库数量", JLabel.CENTER);
+		label_amount = new JLabel("出库数量", JLabel.CENTER);
 		label_category = new JLabel("所属分类", JLabel.CENTER);
 		label_warehouse = new JLabel("所属仓库", JLabel.CENTER);
 
@@ -124,7 +125,23 @@ public class AddStockOutputJFrame extends JFrame implements MouseListener, Actio
 		select_category = new JComboBox();
 		select_category.setEnabled(false);
 		select_warehouse = new JComboBox();
-		select_warehouse.setEnabled(false);
+		//select_warehouse.setEnabled(false);
+		WarehouseServiceImpl warehouseService = new WarehouseServiceImpl();
+		List<Object[]> list_warehouses = new ArrayList();
+		try {
+			list_warehouses = warehouseService.selectAll();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		select_warehouse.addItem(new Item("请选择", "请选择"));
+		if (!list_warehouses.isEmpty()) {
+			int sign = 0;
+			for (Object[] object : list_warehouses) {
+
+				select_warehouse.addItem(new Item((String) object[0], (String) object[1]));
+			}
+		}
+		select_warehouse.addActionListener(this);
 
 		contentPanel.add(label_name);
 		contentPanel.add(select_name);
@@ -156,10 +173,13 @@ public class AddStockOutputJFrame extends JFrame implements MouseListener, Actio
 		if (e.getSource() == button_add) {
 
 			String amount_String = amount.getText().trim();
+			String warehouseId = ((Item) select_warehouse.getSelectedItem()).getKey();
 			String name = ((Item) select_name.getSelectedItem()).getKey();
 			if ("请选择".equals(name)) {
 				JOptionPane.showMessageDialog(null, "请选择出库商品");
-			} else if (amount_String.isEmpty()) {
+			} else if ("请选择".equals(warehouseId)) {
+				JOptionPane.showMessageDialog(null, "请输入出库仓库");
+			}else if (amount_String.isEmpty()) {
 				JOptionPane.showMessageDialog(null, "请输入出库数量");
 			} else {
 				double amount_double = Double.valueOf(amount_String);
@@ -173,7 +193,7 @@ public class AddStockOutputJFrame extends JFrame implements MouseListener, Actio
 					if (user != null) {
 						handlerId = user.getId();
 					}
-					String warehouseId = ((Item) select_warehouse.getSelectedItem()).getKey();
+					//String warehouseId = ((Item) select_warehouse.getSelectedItem()).getKey();
 					String categoryId = ((Item) select_category.getSelectedItem()).getKey();
 					Object[] params = { id, billno, handlerId, warehouseId, categoryId, amount_double, name };
 					StockOrderServiceImpl stockOrderService = new StockOrderServiceImpl();
